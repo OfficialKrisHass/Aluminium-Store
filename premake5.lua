@@ -4,6 +4,8 @@ workspace "Aluminium-Store"
 
 outputDir = "%{cfg.system}-%{cfg.buildcfg}"
 
+include "Aluminium-Store/lib/GLFW"
+
 project "Aluminium-Store"
     location "Aluminium-Store"
     kind "ConsoleApp"
@@ -23,6 +25,14 @@ project "Aluminium-Store"
     includedirs {
 
         "%{prj.name}/src",
+
+        "%{prj.name}/lib/GLFW/include",
+
+    }
+
+    links {
+
+        "GLFW"
 
     }
 
