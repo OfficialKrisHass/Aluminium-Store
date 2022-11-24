@@ -12,8 +12,6 @@ namespace Aluminium {
 		void Update();
 		void Shutdown();
 
-		bool Open();
-
 	private:
 		void* wPointer;
 

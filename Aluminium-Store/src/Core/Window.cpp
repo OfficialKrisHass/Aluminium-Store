@@ -1,5 +1,7 @@
 #include "Window.h"
 
+#include "Application.h"
+
 #include <GLFW/glfw3.h>
 
 #define window (GLFWwindow*) wPointer
@@ -18,6 +20,12 @@ namespace Aluminium {
 		glfwMakeContextCurrent(window);
 		glfwMaximizeWindow(window);
 
+		glfwSetWindowCloseCallback(window, [](GLFWwindow* win) {
+
+			MainApplication::Shutdown();
+
+		});
+
 	}
 
 	void Window::Update() {
@@ -31,12 +39,6 @@ namespace Aluminium {
 
 		glfwDestroyWindow(window);
 		glfwTerminate();
-
-	}
-
-	bool Window::Open() {
-
-		return !glfwWindowShouldClose(window);
 
 	}
 

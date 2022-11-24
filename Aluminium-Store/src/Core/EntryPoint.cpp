@@ -1,12 +1,12 @@
 #include "Core/Application.h"
 
+#include <iostream>
+
 int main() {
 
 	using namespace Aluminium;
 
 	MainApplication::Initialize();
-	MainApplication::StartLoop();
-	MainApplication::Shutdown();
 
 	return 0;
 

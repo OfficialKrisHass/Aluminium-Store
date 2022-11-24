@@ -1,21 +1,22 @@
 #include "Application.h"
+#include "asio.h"
 
 #include "Window.h"
+#include "Client.h"
 
-#ifdef _WIN32
-#define _WIN32_WINNT 0x0A00
-#endif
-
-#define ASIO_STANDALONE
-#include <asio.hpp>
+#include "../../Aluminium-Server/src/Core/Constants.h"
 
 #include <iostream>
+#include <thread>
 
 namespace Aluminium::MainApplication {
+
+	using namespace asio::ip;
 
 	struct AppData {
 
 		Window window;
+		bool running = true;
 
 		asio::io_context context;
 
@@ -23,82 +24,80 @@ namespace Aluminium::MainApplication {
 
 	AppData data;
 
-	using namespace asio::ip;
+	void StartLoop();
+
+	void HandleNetworking();
 
 	void Initialize() {
 
-		/*data.window = Window();
-		data.window.Initialize(1280, 720, "Aluminium Store");*/
+		data.window = Window();
+		data.window.Initialize(1280, 720, "Aluminium Store");
 
-		try {
+		std::thread networking(HandleNetworking);
 
-			tcp::resolver resolver(data.context);
-			tcp::resolver::results_type endpoints = resolver.resolve("127.0.0.1", "80");
-			tcp::socket socket(data.context);
-
-			std::cout << "Trying to connect to the Server\n" << std::endl;
-			asio::connect(socket, endpoints);
-			std::cout << "Successfully Connected to the Server\n" << std::endl;
-
-			while (true) {
-
-				std::vector<char> buf(128);
-				asio::error_code error;
-
-				std::cout << "Reading the Welcome Message" << std::endl;
-
-				size_t len = socket.read_some(asio::buffer(buf), error);
-
-				if (error == asio::error::eof) {
-
-					std::cout << "Clean disconnection\n" << std::endl;
-
-					break;
-
-				} else if(error) {
-
-					std::cout << "An error has occured while Reading the Message" << std::endl;
-
-					throw asio::system_error(error);
-
-				}
-
-				std::cout.write(buf.data(), len);
-				std::cout << std::endl;
-
-				std::cout << "Sending a Response" << std::endl;
-
-				std::string response = "Thanks for welcoming me!";
-				socket.write_some(asio::buffer(response), error);
-
-			}
-
-		} catch (std::exception e) {
-
-			std::cout << e.what() << std::endl;
-
-		}
-
-		std::cout << "Exiting the Initialization Function" << std::endl;
+		StartLoop();
+		networking.join();
 
 	}
 
 	void StartLoop() {
 
-		/*while (data.window.Open()) {
+		while (data.running) {
 
 			data.window.Update();
 
-		}*/
+			Sleep(MiliSecondsPerTick);
+
+		}
 
 	}
 
 	void Shutdown() {
 
-		//data.window.Shutdown();
+		data.running = false;
+		data.window.Shutdown();
 
-		std::cin.get();
+		try {
+
+			Client::Write("Disconnect");
+
+		} catch(std::exception e) {
+
+			std::cout << e.what() << std::endl;
+
+		}
 
 	}
+
+	void HandleNetworking() {
+
+		Client::Initialize();
+		std::cout << Client::Read() << std::endl;
+
+		Client::Write("Login");
+
+		while (data.running) {
+
+			std::string msg;
+
+			try {
+
+				msg = Client::Read();
+
+			} catch (std::exception e) {
+
+				Shutdown();
+
+			}
+
+			std::cout << msg << std::endl;
+
+			Sleep(MiliSecondsPerTick);
+
+		}
+
+	}
+
+	asio::io_context& GetContext() { return data.context; }
 
 }

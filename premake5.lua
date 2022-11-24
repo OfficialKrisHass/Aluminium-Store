@@ -1,7 +1,7 @@
 workspace "Aluminium-Store"
     architecture "x64"
     configurations { "Debug", "Release" }
-    startproject "Aluminium-Store"
+    startproject "Aluminium-Server"
 
 outputDir = "%{cfg.system}-%{cfg.buildcfg}"
 
@@ -30,7 +30,7 @@ project "Aluminium-Store"
         "%{prj.name}/lib/GLFW/include",
         
         "Aluminium-Server/lib/asio/include",
-        
+
     }
 
     links {
@@ -60,6 +60,9 @@ project "Aluminium-Server"
 
     targetdir("Build/" .. outputDir .. "/%{prj.name}")
     objdir("Build/Intermediate/" .. outputDir .. "/%{prj.name}")
+
+    pchheader "alpch.h"
+    pchsource "%{prj.name}/src/alpch.cpp"
 
     files {
 

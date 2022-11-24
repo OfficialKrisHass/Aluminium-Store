@@ -1,9 +1,10 @@
 #pragma once
 
+#include "Core/asio.h"
+
 namespace Aluminium::Server {
 
-	void Initialize();
-	void Start();
-	void Shutdown();
+	asio::io_context& GetContext();
+	tcp::acceptor& GetAcceptor();
 
 }
