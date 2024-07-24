@@ -22,6 +22,8 @@ namespace Aluminium::Window {
 
         glfwMakeContextCurrent(window);
 
+        std::cout << "Window opened";
+
     }
     void Update() {
 

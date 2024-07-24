@@ -1,5 +1,5 @@
 OS = linux
-CONFIGURATION = Release
+CONFIGURATION = Debug
 BUILD_DIR = $(OS)-x86_64-$(CONFIGURATION)
 
 .PHONY: all
@@ -21,8 +21,8 @@ build:
 launch:
 	@./build/$(BUILD_DIR)/Aluminium-Client/Aluminium-Client
 
-start_server:
-	@./build/$(BUILD_DIR)/Aluminium-Server/Aluminium-Server
+start-server:
+	@./build/$(BUILD_DIR)/Aluminium-Server/Aluminium-Server &
 
 clean:
 	@rm -rf build/

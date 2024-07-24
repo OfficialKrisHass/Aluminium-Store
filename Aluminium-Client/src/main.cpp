@@ -1,5 +1,7 @@
 #include "Window.h"
 #include "UI.h"
+#include "Network.h"
+#include "User.h"
 
 #include <imgui.h>
 #include <imgui_internal.h>
@@ -9,17 +11,28 @@
 
 namespace Aluminium {
 
-    bool loggedIn = false;
+    void Shutdown();
 
-    std::string username;
-    std::string password;
+    int32 StartClient() {
 
-    void LogIn();
-
-    void StartClient() {
+        std::cout << "Starting Aluminium Client\n";
 
         Window::Initialize();
         UI::Initialize();
+
+        Network::Initialize();
+
+        if (!Network::ConnectToServer()) {
+
+            std::cout << "Failed to connect to the Aluminium Server!\n";
+
+            Shutdown();
+            return -1;
+
+        }
+        std::cout << "Succesfully connected to an Aluminium Server\n";
+
+        User::LogIn();
 
         while (Window::IsWindowOpen()) {
 
@@ -33,10 +46,7 @@ namespace Aluminium {
 
             ImGui::Begin("Main", nullptr, flags);
 
-            if (!loggedIn)
-                LogIn();
-            else
-                ImGui::Text("Welcome to the Aluminium store!");
+            ImGui::Text("Welcome to the aluminium store");
 
             ImGui::End();
 
@@ -44,26 +54,20 @@ namespace Aluminium {
 
         }
 
-        UI::Shutdown();
-        Window::Shutdown();
+        Shutdown();
+
+        return 0;
 
     }
 
-    void LogIn() {
+    void Shutdown() {
 
-        ImGui::Begin("Log in");
+        std::cout << "Shutting down\n";
 
-        ImGui::InputText("Username", &username);
-        ImGui::InputText("Password", &password, ImGuiInputTextFlags_Password);
+        Network::Shutdown();
 
-        if (ImGui::Button("Log in")) {
-
-            std::cout << "Logged in as user " << username << " with password " << password << "\n";
-            loggedIn = true;
-
-        }
-
-        ImGui::End();
+        UI::Shutdown();
+        Window::Shutdown();
 
     }
 
@@ -73,7 +77,6 @@ int main() {
 
     std::cout << "Hello, World!\n";
 
-    Aluminium::StartClient();
-    return 0;
+    return Aluminium::StartClient();
 
 }

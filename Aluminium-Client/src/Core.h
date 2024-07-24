@@ -2,6 +2,8 @@
 
 #include "Debug.h"
 
+#include <string>
+
 namespace Aluminium {
 
     typedef char int8;
