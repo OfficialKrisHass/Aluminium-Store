@@ -11,8 +11,6 @@
 #include <backends/imgui_impl_opengl3.h>
 #include <backends/imgui_impl_glfw.h>
 
-#include <iostream>
-
 namespace Aluminium::UI {
 
     void Initialize() {
@@ -26,7 +24,7 @@ namespace Aluminium::UI {
         ImGui_ImplGlfw_InitForOpenGL((GLFWwindow*) Window::GetPointer(), true);
         ImGui_ImplOpenGL3_Init("#version 460");
 
-        std::cout << "UI Initialized\n";
+        Log("UI Initialized");
 
     }
     void BeginFrame() {
@@ -76,6 +74,8 @@ namespace Aluminium::UI {
 
     }
     void Shutdown() {
+
+        Log("Shutting down UI");
 
         ImGui_ImplOpenGL3_Shutdown();
         ImGui_ImplGlfw_Shutdown();

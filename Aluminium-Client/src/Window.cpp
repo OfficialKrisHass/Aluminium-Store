@@ -2,8 +2,6 @@
 
 #include <GLFW/glfw3.h>
 
-#include <iostream>
-
 namespace Aluminium::Window {
 
     GLFWwindow* window = nullptr;
@@ -22,7 +20,7 @@ namespace Aluminium::Window {
 
         glfwMakeContextCurrent(window);
 
-        std::cout << "Window opened";
+        Log("Window opened");
 
     }
     void Update() {
@@ -32,6 +30,8 @@ namespace Aluminium::Window {
 
     }
     void Shutdown() {
+
+        Log("Shutting down window");
 
         glfwDestroyWindow(window);
         glfwTerminate();

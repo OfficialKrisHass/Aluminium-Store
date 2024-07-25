@@ -1,6 +1,6 @@
 #pragma once
 
-#define ALUMINIUM_PORT 3001
+#include <Core.h>
 
 namespace Aluminium::Network {
 
@@ -14,10 +14,25 @@ namespace Aluminium::Network {
 
     };
 
+    typedef uint32 Connection;
+    struct StatusChangeData {
+
+        ConnectionState state;
+        ConnectionState oldState;
+        
+        Connection conn;
+        const char* connDescription;
+
+    };
+
     void Initialize();
+    void Update();
     void Shutdown();
 
-    typedef void (*ConnectionStatusChangeCallback)(ConnectionState state);
-    void SetConnectionStatucChangedCallback(ConnectionStatusChangeCallback callback);
+    bool AcceptConnection(Connection conn);
+    void CloseConnection(Connection conn);
+
+    typedef void (*ConnectionStatusChangeCallback)(StatusChangeData data);
+    void SetConnectionStatusChangedCallback(ConnectionStatusChangeCallback callback);
 
 }

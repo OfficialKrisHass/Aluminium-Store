@@ -1,8 +1,13 @@
 #pragma once
 
+#include "Log.h"
 #include "Debug.h"
 
 #include <string>
+
+#define ALUMINIUM_PORT 3001
+
+#define INVALID_CONN_ID 0 
 
 namespace Aluminium {
 

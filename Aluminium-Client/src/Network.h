@@ -1,8 +1,6 @@
 #pragma once
 
-#include "Core.h"
-
-#define ALUMINIUM_PORT 3001
+#include <Core.h>
 
 namespace Aluminium::Network {
 

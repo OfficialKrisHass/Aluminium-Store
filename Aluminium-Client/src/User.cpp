@@ -6,15 +6,13 @@
 #include <imgui_internal.h>
 #include <misc/cpp/imgui_stdlib.h>
 
-#include <iostream>
-
 namespace Aluminium::User {
 
     std::string username;
 
     void LogIn() {
 
-        std::cout << "Logging in\n";
+        Log("Logging In");
 
         std::string tmp;
 
@@ -43,7 +41,7 @@ namespace Aluminium::User {
 
         }
 
-        std::cout << "Logged in as " << username << " with password " << tmp << "\n";
+        Log("Logged in as {} with password {}", username, tmp);
 
     }
 

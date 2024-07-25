@@ -7,15 +7,13 @@
 #include <imgui_internal.h>
 #include <misc/cpp/imgui_stdlib.h>
 
-#include <iostream>
-
 namespace Aluminium {
 
     void Shutdown();
 
     int32 StartClient() {
 
-        std::cout << "Starting Aluminium Client\n";
+        Log("Starting Aluminium Client");
 
         Window::Initialize();
         UI::Initialize();
@@ -24,13 +22,13 @@ namespace Aluminium {
 
         if (!Network::ConnectToServer()) {
 
-            std::cout << "Failed to connect to the Aluminium Server!\n";
+            LogError("Failed to connect to the Aluminium Server");
 
             Shutdown();
             return -1;
 
         }
-        std::cout << "Succesfully connected to an Aluminium Server\n";
+        Log("Succesfully connected to an Aluminium Server");
 
         User::LogIn();
 
@@ -62,7 +60,7 @@ namespace Aluminium {
 
     void Shutdown() {
 
-        std::cout << "Shutting down\n";
+        Log("Shutting down");
 
         Network::Shutdown();
 
@@ -74,8 +72,6 @@ namespace Aluminium {
 }
 
 int main() {
-
-    std::cout << "Hello, World!\n";
 
     return Aluminium::StartClient();
 

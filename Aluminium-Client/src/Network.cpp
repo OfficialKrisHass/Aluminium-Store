@@ -3,8 +3,6 @@
 #include <steam/steamnetworkingsockets.h>
 #include <steam/isteamnetworkingutils.h>
 
-#include <iostream>
-
 namespace Aluminium::Network {
 
     HSteamNetConnection connection;
@@ -15,22 +13,26 @@ namespace Aluminium::Network {
 
     void Initialize() {
 
-        std::cout << "Initializing GameNetworkingSockets\n";
+        Log("Initializing GameNetworkingSockets");
 
         SteamDatagramErrMsg errMsg;
-        if (!GameNetworkingSockets_Init(nullptr, errMsg))
-            std::cout << "Failed to initialize GameNetworkingSockets\n";
+        if (!GameNetworkingSockets_Init(nullptr, errMsg)) {
+
+            LogError("Failed to initialize GameNetworkingSockets");
+            exit(-1);
+
+        }
 
         SteamNetworkingUtils()->SetDebugOutputFunction(k_ESteamNetworkingSocketsDebugOutputType_Msg, DebugOutput);
 
         interface = SteamNetworkingSockets();
 
-        std::cout << "Successfully initialized GameNetworkingSockets\n";
+        Log("Successfully initialized GameNetworkingSockets");
 
     }
     void Shutdown() {
 
-        std::cout << "Shutting down GameNetworkingSockets\n";
+        Log("Shutting down GameNetworkingSockets");
         GameNetworkingSockets_Kill();
 
     }
@@ -45,14 +47,14 @@ namespace Aluminium::Network {
         serverAddr.m_port = ALUMINIUM_PORT;
         if (serverAddr.IsIPv6AllZeros()) {
 
-            std::cout << "Could not parse IPv6 address\n";
+            LogError("Could not parse IPv6 address");
             return false;
 
         }
 
         char addrBuf[SteamNetworkingIPAddr::k_cchMaxString];
         serverAddr.ToString(addrBuf, SteamNetworkingIPAddr::k_cchMaxString, true);
-        std::cout << "Connecting to Aluminium server at address " << addrBuf << "\n";
+        Log("Connecting to Aluminium server at address {}", addrBuf);
 
         // Connect to the server
 
@@ -64,13 +66,13 @@ namespace Aluminium::Network {
 
         if (connection != k_HSteamNetConnection_Invalid) return true;
 
-        std::cout << "Could not connect to server at adress " << addrBuf << "\n";
+        LogError("Could not connect to server at address {}", addrBuf);
         return false;
 
     }
     void DebugOutput(ESteamNetworkingSocketsDebugOutputType type, const char* msg) {
 
-        std::cout << msg << "\n";
+        Log(msg);
 
     }
     void OnConnectionStatucChanged(SteamNetConnectionStatusChangedCallback_t* info) {

@@ -3,8 +3,6 @@
 #include <steam/steamnetworkingsockets.h>
 #include <steam/isteamnetworkingutils.h>
 
-#include <iostream>
-
 namespace Aluminium::Network {
 
     static void DebugOutput(ESteamNetworkingSocketsDebugOutputType type, const char* msg);
@@ -21,17 +19,17 @@ namespace Aluminium::Network {
 
         // Initialize GameNetworkingSockets
 
-        std::cout << "Initializing GameNetworkingSockets\n";
+        Log("Initializing GameNetworkingSockets");
 
         SteamDatagramErrMsg errMsg;
         if (!GameNetworkingSockets_Init(nullptr, errMsg))
-            std::cout << "Failed to initialize GameNetworkingSockets!\n";
+            LogError("Failed to initialize GameNetworkingSockets");
 
         SteamNetworkingUtils()->SetDebugOutputFunction(k_ESteamNetworkingSocketsDebugOutputType_Msg, DebugOutput);
 
         // Open the socket
         
-        std::cout << "Opening server socket\n";
+        Log("Opening server socket");
 
         SteamNetworkingIPAddr addr;
         addr.Clear();
@@ -45,34 +43,58 @@ namespace Aluminium::Network {
 
         if (listen == k_HSteamListenSocket_Invalid) {
 
-            std::cout << "Failed to open Server socket!\n";
+            LogError("Failed to open Server socket");
             exit(-1);
 
         }
 
-        std::cout << "Successfully opened server socket\n";
+        Log("Successfully opened server socket");
 
+
+    }
+    void Update() {
+
+        interface->RunCallbacks();
 
     }
     void Shutdown() {
 
-        std::cout << "Closing server socket\n";
+        Log("Closing server socket");
         interface->CloseListenSocket(listen);
 
         GameNetworkingSockets_Kill();
 
     }
 
-    void SetConnectionStatucChangedCallback(ConnectionStatusChangeCallback callback) { connectionStatusChangeCallback = callback; }
+    bool AcceptConnection(Connection conn) {
+
+        if (interface->AcceptConnection(conn) == k_EResultOK) return true;
+        return false;
+
+    }
+    void CloseConnection(Connection conn) {
+
+        interface->CloseConnection(conn, 0, nullptr, false);
+
+    }
+
+    void SetConnectionStatusChangedCallback(ConnectionStatusChangeCallback callback) { connectionStatusChangeCallback = callback; }
 
     void DebugOutput(ESteamNetworkingSocketsDebugOutputType type, const char* msg) {
 
-        std::cout << msg << "\n";
+        Log(msg);
 
     }
     void OnConnectionStatusChanged(SteamNetConnectionStatusChangedCallback_t* info) {
 
-        connectionStatusChangeCallback(StateConvert(info->m_info.m_eState));
+        StatusChangeData data;
+
+        data.state = StateConvert(info->m_info.m_eState);
+        data.oldState = StateConvert(info->m_eOldState);
+        data.conn = info->m_hConn;
+        data.connDescription = info->m_info.m_szConnectionDescription;
+
+        connectionStatusChangeCallback(data);
 
     }
 
