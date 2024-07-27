@@ -4,8 +4,6 @@
 
 namespace Aluminium::User {
 
-    void LogIn();
-
-    std::string GetName();
+    //
 
 }

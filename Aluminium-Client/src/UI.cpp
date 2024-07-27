@@ -58,9 +58,19 @@ namespace Aluminium::UI {
 
         style.WindowMinSize.x = minWinSizeX;
 
+        // Main window
+
+        ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;
+        ImGuiWindowClass winClass;
+        winClass.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_NoTabBar;
+        ImGui::SetNextWindowClass(&winClass);
+
+        ImGui::Begin("Main", nullptr, flags);
+
     }
     void EndFrame() {
 
+        ImGui::End(); // Main window
         ImGui::End(); // Dockspace
 
         ImGui::Render();

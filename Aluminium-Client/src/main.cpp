@@ -1,52 +1,44 @@
 #include "Window.h"
 #include "UI.h"
 #include "Network.h"
-#include "User.h"
 
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <misc/cpp/imgui_stdlib.h>
 
+#include <thread>
+
 namespace Aluminium {
 
+    bool running = true;
+
     void Shutdown();
+
+    void OnConnectionStatusChanged(const Network::StatusChangeData& data);
+    void OnWindowClose();
 
     int32 StartClient() {
 
         Log("Starting Aluminium Client");
 
-        Window::Initialize();
+        Window::Initialize(OnWindowClose);
         UI::Initialize();
 
+        // Start the network and the network thread
+        
         Network::Initialize();
+        Network::SetConnectionStatusChangedCallback(OnConnectionStatusChanged);
+        std::thread networkThread(Network::Update);
 
-        if (!Network::ConnectToServer()) {
-
-            LogError("Failed to connect to the Aluminium Server");
-
-            Shutdown();
-            return -1;
-
-        }
-        Log("Succesfully connected to an Aluminium Server");
-
-        User::LogIn();
-
-        while (Window::IsWindowOpen()) {
+        while (running) {
 
             Window::Update();
             UI::BeginFrame();
 
-            ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;
-            ImGuiWindowClass winClass;
-            winClass.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_NoTabBar;
-            ImGui::SetNextWindowClass(&winClass);
-
-            ImGui::Begin("Main", nullptr, flags);
-
-            ImGui::Text("Welcome to the aluminium store");
-
-            ImGui::End();
+            if (Network::IsConnected())
+                ImGui::Text("Connecting...");
+            else
+                ImGui::Text("Welcome to the aluminium Store!");
 
             UI::EndFrame();
 
@@ -68,6 +60,43 @@ namespace Aluminium {
         Window::Shutdown();
 
     }
+
+    void OnConnectionStatusChanged(const Network::StatusChangeData& data) {
+
+        using namespace Network;
+
+        switch (data.state) {
+
+            case ConnectionState::ClosedByPeer:
+            case ConnectionState::LocalProblem: {
+                
+                running = false;
+
+                if (data.oldState == ConnectionState::Connecting)
+                    LogError("Timed out");
+                if (data.state == ConnectionState::LocalProblem)
+                    LogError("A local problem has been encountered, quitting now");
+                else
+                    Log("Disconnected from the server manually");
+
+                Network::CloseConnection(data.conn);
+
+                break;
+
+            }
+            default: break;
+
+        }
+
+    }
+    void OnWindowClose() {
+
+        Log("Window close has been requested");
+        running = false;
+
+    }
+
+    bool IsRunning() { return running; }
 
 }
 

@@ -4,7 +4,9 @@
 
 namespace Aluminium::Window {
 
-    void Initialize();
+    typedef void (*WindowCloseCallback)();
+
+    void Initialize(WindowCloseCallback winCloseCallback);
     void Update();
     void Shutdown();
 

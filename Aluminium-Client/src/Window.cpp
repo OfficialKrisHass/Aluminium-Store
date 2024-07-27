@@ -5,8 +5,9 @@
 namespace Aluminium::Window {
 
     GLFWwindow* window = nullptr;
+    WindowCloseCallback winCloseCallback = nullptr;
 
-    void Initialize() {
+    void Initialize(WindowCloseCallback callback) {
 
         int init = glfwInit();
         AL_ASSERT(init, "Failed to initialize GLFW");
@@ -19,6 +20,13 @@ namespace Aluminium::Window {
         AL_ASSERT(window, "Failed to create window");
 
         glfwMakeContextCurrent(window);
+
+        winCloseCallback = callback;
+        glfwSetWindowCloseCallback(window, [](GLFWwindow* window) {
+
+            winCloseCallback();
+
+        });
 
         Log("Window opened");
 

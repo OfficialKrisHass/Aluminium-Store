@@ -8,8 +8,6 @@ namespace Aluminium::Network {
     static void DebugOutput(ESteamNetworkingSocketsDebugOutputType type, const char* msg);
     static void OnConnectionStatusChanged(SteamNetConnectionStatusChangedCallback_t* info);
 
-    static ConnectionState StateConvert(ESteamNetworkingConnectionState steamState);
-
     ISteamNetworkingSockets* interface;
     HSteamListenSocket listen;
 
@@ -95,23 +93,6 @@ namespace Aluminium::Network {
         data.connDescription = info->m_info.m_szConnectionDescription;
 
         connectionStatusChangeCallback(data);
-
-    }
-
-    ConnectionState StateConvert(ESteamNetworkingConnectionState steamState) {
-
-        switch (steamState) {
-
-            case k_ESteamNetworkingConnectionState_None: return ConnectionState::None;
-            case k_ESteamNetworkingConnectionState_ClosedByPeer: return ConnectionState::ClosedByPeer;
-            case k_ESteamNetworkingConnectionState_ProblemDetectedLocally: return ConnectionState::LocalProblem;
-            case k_ESteamNetworkingConnectionState_Connecting: return ConnectionState::Connecting;
-            case k_ESteamNetworkingConnectionState_Connected: return ConnectionState::Connected;
-            default: return ConnectionState::None;
-
-        }
-
-        return ConnectionState::None;
 
     }
 

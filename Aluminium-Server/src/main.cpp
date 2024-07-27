@@ -9,7 +9,7 @@ namespace Aluminium {
     bool running = true;
     std::unordered_map<uint32, User> connectedUsers;
 
-    void ConnectionStatusChangedCallback(Network::StatusChangeData data);
+    void ConnectionStatusChangedCallback(const Network::StatusChangeData& data);
 
     int StartServer() {
 
@@ -42,7 +42,7 @@ namespace Aluminium {
 
     }
 
-    void ConnectionStatusChangedCallback(Network::StatusChangeData data) {
+    void ConnectionStatusChangedCallback(const Network::StatusChangeData& data) {
 
         using namespace Network;
 
