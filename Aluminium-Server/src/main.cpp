@@ -23,6 +23,15 @@ namespace Aluminium {
 
             Network::Update();
 
+            Network::NetworkMessage message;
+            Network::RecieveMessage(&message);
+            if (message) {
+
+                Log("Recieved message from {}: {}", connectedUsers[message.conn].GetName(), message.msg);
+                Network::SendMessage(message.conn, "Message recieved!");
+
+            }
+
             std::this_thread::sleep_for(std::chrono::seconds(1));
 
             if (i == 10)

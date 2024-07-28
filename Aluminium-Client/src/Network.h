@@ -13,6 +13,10 @@ namespace Aluminium::Network {
     bool IsConnected();
 
     void CloseConnection(Connection conn);
+
+    void SendMessage(const char* msg);
+    void RecieveMessage(NetworkMessage *out);
+    uint32 RecieveMessages(NetworkMessage **out);
     
     void SetConnectionStatusChangedCallback(ConnectionStatusChangeCallback callback);
 

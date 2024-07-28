@@ -5,7 +5,7 @@
 #include <fmt/format.h>
 #include <fmt/color.h>
 
-#if defined(AL_SERVER) || defined(AL_DEBUG)
+#ifdef AL_LOGGING
 #define Log(...) ::Aluminium::Logger::LogMsg(__VA_ARGS__)
 #define LogWarn(...) ::Aluminium::Logger::LogWarnMsg(__VA_ARGS__)
 #define LogError(...) ::Aluminium::Logger::LogErrorMsg(__VA_ARGS__)

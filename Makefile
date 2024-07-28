@@ -1,6 +1,8 @@
 OS = linux
-CONFIGURATION = Debug
+CONFIGURATION = Release
 BUILD_DIR = $(OS)-x86_64-$(CONFIGURATION)
+
+CLIENT_LOGGING = OFF
 
 .PHONY: all
 .PHONY: clean
@@ -10,7 +12,7 @@ BUILD_DIR = $(OS)-x86_64-$(CONFIGURATION)
 all: cmake build
 
 cmake: CMakeLists.txt Aluminium-Client/CMakeLists.txt Aluminium-Server/CMakeLists.txt
-	@cmake . -B cmake/$(CONFIGURATION) -DCMAKE_BUILD_TYPE=$(CONFIGURATION) -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+	@cmake . -B cmake/$(CONFIGURATION) -DCMAKE_BUILD_TYPE=$(CONFIGURATION) -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -DCLIENT_LOGGING=$(CLIENT_LOGGING)
 	@rm -f compile_commands.json
 	@ln -s cmake/$(CONFIGURATION)/compile_commands.json compile_commands.json
 

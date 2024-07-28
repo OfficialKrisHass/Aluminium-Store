@@ -104,6 +104,49 @@ namespace Aluminium::Network {
 
     }
 
+    void SendMessage(const char* msg) {
+
+        AL_ASSERT(connection != k_HSteamNetConnection_Invalid, "Can't send message when not connected. Message: {}", msg);
+
+        EResult res = interface->SendMessageToConnection(connection, msg, (uint32) strlen(msg), k_nSteamNetworkingSend_Reliable, nullptr);
+        AL_ASSERT(res == k_EResultOK, "Could not send message to server. Message: {}", msg);
+
+    }
+    void RecieveMessage(NetworkMessage *out) {
+
+        ISteamNetworkingMessage* incomingMsg = nullptr;
+        if (interface->ReceiveMessagesOnConnection(connection, &incomingMsg, 1) == 0) return;
+        AL_ASSERT(incomingMsg->m_conn == connection, "Recieved message from a different connection {}, expected {}", incomingMsg->m_conn, connection);
+
+        out->conn = incomingMsg->m_conn;
+        out->msg = (const char*) incomingMsg->m_pData;
+        out->size = incomingMsg->m_cbSize;
+
+    }
+    uint32 RecieveMessages(NetworkMessage **out) {
+
+        ISteamNetworkingMessage* incomingMsg = nullptr;
+        uint32 num = interface->ReceiveMessagesOnConnection(connection, &incomingMsg, 100);
+        if (num == 0) return 0;
+
+        *out = new NetworkMessage[num];
+        for (uint32 i = 0; i < num; i++) {
+
+            NetworkMessage* msg = out[i];
+            AL_ASSERT(incomingMsg->m_conn == connection, "Recieved message from a different connection {}, expected {}", incomingMsg->m_conn, connection);
+
+            msg->conn = incomingMsg->m_conn;
+            msg->msg = (const char*) incomingMsg->m_pData;
+            msg->size = incomingMsg->m_cbSize;   
+
+            incomingMsg++;
+
+        }
+
+        return num;
+
+    }
+
     void SetConnectionStatusChangedCallback(ConnectionStatusChangeCallback callback) {
 
         connectionStatusChangeCallback = callback;
@@ -112,7 +155,7 @@ namespace Aluminium::Network {
 
     void DebugOutput(ESteamNetworkingSocketsDebugOutputType type, const char* msg) {
 
-        Log(msg);
+        //Log(msg);
 
     }
     void OnConnectionStatusChanged(SteamNetConnectionStatusChangedCallback_t* info) {
@@ -128,8 +171,8 @@ namespace Aluminium::Network {
 
         if (data.state != ConnectionState::Connected) return;
         
-        Log("Successfully connected to the Aluminium server"); 
         connected = true;
+        Log("Successfully connected to the Aluminium server"); 
 
     }
 

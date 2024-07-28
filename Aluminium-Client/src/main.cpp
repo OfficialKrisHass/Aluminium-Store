@@ -30,19 +30,44 @@ namespace Aluminium {
         Network::SetConnectionStatusChangedCallback(OnConnectionStatusChanged);
         std::thread networkThread(Network::Update);
 
+        bool test = false;
+        Network::NetworkMessage msg;
+
         while (running) {
 
             Window::Update();
             UI::BeginFrame();
 
-            if (Network::IsConnected())
+            if (!Network::IsConnected())
                 ImGui::Text("Connecting...");
-            else
+            else {
+
                 ImGui::Text("Welcome to the aluminium Store!");
+
+                if (!test) {
+
+                    Network::SendMessage("Wadup m8"); 
+                    test = true;
+
+                }
+
+                if (!msg)
+                    Network::RecieveMessage(&msg);
+                else {
+
+                    ImGui::Text("Server Says: ");
+                    ImGui::SameLine();
+                    ImGui::Text(msg.msg);
+
+                }
+
+            }
 
             UI::EndFrame();
 
         }
+
+        networkThread.join();
 
         Shutdown();
 
