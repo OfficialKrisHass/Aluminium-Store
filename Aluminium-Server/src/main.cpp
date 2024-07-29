@@ -1,4 +1,5 @@
 #include "Network.h"
+#include "Database.h"
 #include "User.h"
 
 #include <thread>
@@ -11,12 +12,14 @@ namespace Aluminium {
 
     void ConnectionStatusChangedCallback(const Network::StatusChangeData& data);
 
-    int StartServer() {
+    int StartServer(int argc, char** argv) {
 
         Log("Starting Aluminium Server");
 
         Network::Initialize();
         Network::SetConnectionStatusChangedCallback(ConnectionStatusChangedCallback);
+
+        Database::Initialize(argv[1]);
 
         int i = 0;
         while (running) {
@@ -104,8 +107,9 @@ namespace Aluminium {
 
 }
 
-int main() {
+int main(int argc, char** argv) {
 
-    return Aluminium::StartServer();
+    AL_ASSERT(argc > 1, "Missing database password in arguments");
+    return Aluminium::StartServer(argc, argv);
 
 }

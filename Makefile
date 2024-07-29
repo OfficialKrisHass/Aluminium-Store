@@ -24,7 +24,7 @@ launch:
 	@./build/$(BUILD_DIR)/Aluminium-Client/Aluminium-Client
 
 start-server:
-	@./build/$(BUILD_DIR)/Aluminium-Server/Aluminium-Server &
+	@./build/$(BUILD_DIR)/Aluminium-Server/Aluminium-Server $(PASSWORD) &
 
 clean:
 	@rm -rf build/
