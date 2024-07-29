@@ -31,5 +31,23 @@ namespace Aluminium::Database {
         END;
 
     }
+    void Shutdown() {
+
+        Log("Shutting down the Aluminium database");
+
+        delete conn;
+        delete cmd;
+
+    }
+
+    void AddUser(const char *email, const char *username, const char *password) {
+
+        std::string text = "INSERT INTO Users(email, name, password) VALUES('";
+        text += email; text += "','";
+        text += username; text += "','";
+        text += password; text += "');";
+        cmd->execute(text);
+
+    }
 
 }

@@ -21,7 +21,6 @@ namespace Aluminium {
 
         Database::Initialize(argv[1]);
 
-        int i = 0;
         while (running) {
 
             Network::Update();
@@ -30,17 +29,29 @@ namespace Aluminium {
             Network::RecieveMessage(&message);
             if (message) {
 
-                Log("Recieved message from {}: {}", connectedUsers[message.conn].GetName(), message.msg);
-                Network::SendMessage(message.conn, "Message recieved!");
+                std::string msg = message.msg;
+                uint64 i = msg.find("/Register/");
+                if (i != std::string::npos) {
+
+                    i += 10;
+
+                    std::string email = msg.substr(i, msg.find(',', i) - i);
+                    i += email.size() + 1;
+
+                    std::string username = msg.substr(i, msg.find(',', i) - i);
+                    i += username.size() + 1;
+
+                    std::string password = msg.substr(i, msg.find(',', i) - i);
+                    i += password.size() + 1; 
+
+                    Database::AddUser(email.c_str(), username.c_str(), password.c_str());
+                    Network::SendMessage(message.conn, "/Register/Success");
+
+                }
 
             }
 
-            std::this_thread::sleep_for(std::chrono::seconds(1));
-
-            if (i == 10)
-                running = false;
-
-            i++;
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
         }
 
