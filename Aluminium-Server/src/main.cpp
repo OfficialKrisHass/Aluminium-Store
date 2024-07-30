@@ -10,6 +10,8 @@ namespace Aluminium {
     bool running = true;
     std::unordered_map<uint32, User> connectedUsers;
 
+    void HandleMessage(const Network::NetworkMessage& message);
+
     void ConnectionStatusChangedCallback(const Network::StatusChangeData& data);
 
     int StartServer(int argc, char** argv) {
@@ -27,29 +29,8 @@ namespace Aluminium {
 
             Network::NetworkMessage message;
             Network::RecieveMessage(&message);
-            if (message) {
-
-                std::string msg = message.msg;
-                uint64 i = msg.find("/Register/");
-                if (i != std::string::npos) {
-
-                    i += 10;
-
-                    std::string email = msg.substr(i, msg.find(',', i) - i);
-                    i += email.size() + 1;
-
-                    std::string username = msg.substr(i, msg.find(',', i) - i);
-                    i += username.size() + 1;
-
-                    std::string password = msg.substr(i, msg.find(',', i) - i);
-                    i += password.size() + 1; 
-
-                    Database::AddUser(email.c_str(), username.c_str(), password.c_str());
-                    Network::SendMessage(message.conn, "/Register/Success");
-
-                }
-
-            }
+            if (message)
+                HandleMessage(message);
 
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
@@ -62,6 +43,63 @@ namespace Aluminium {
         Log("Aluminium server shut down successfully");
 
         return 0;
+
+    }
+
+    void HandleMessage(const Network::NetworkMessage& message) {
+
+        uint64 begin = strlen("/SignIn/");
+        const std::string msg = message.msg;
+
+        if (msg.find("/SignUp/") != std::string::npos) {
+
+            std::string email = msg.substr(begin, msg.find_first_of(' ', begin) - begin);
+            begin += email.size() + 1;
+
+            std::string username = msg.substr(begin, msg.find_first_of(' ', begin) - begin);
+            begin += username.size() + 1;
+
+            std::string password = msg.substr(begin);
+
+            Log("Singing up user {}", email);
+
+            Database::AddUser(email.c_str(), username.c_str(), password.c_str());
+            Network::SendMessage(message.conn, "/SignIn/Success");
+
+            return;
+
+        }
+        if (msg.find("/SignIn/") != std::string::npos) {
+
+            std::string login = msg.substr(begin, msg.find_first_of(' ', begin) - begin);
+            begin += login.size() + 1;
+
+            std::string password = msg.substr(begin);
+
+            Log("Signing in user {}", login);
+            if (!Database::GetUserFromEmail(login.c_str()) && !Database::GetUserFromName(login.c_str())) {
+
+                LogError("Failed to Sign In, invalid login");
+                Network::SendMessage(message.conn, "/SignIn/Invalid login");
+
+                return;
+
+            }
+            if (!Database::CheckUserPassword(login.c_str(), password.c_str())) {
+
+                LogError("Failed to Sign In, invalid password");
+                Network::SendMessage(message.conn, "/SignIn/Invalid password");
+
+                return;
+
+            }
+
+            Log("Successfully logged in user {}", login);
+            Network::SendMessage(message.conn, "/SignIn/Success");
+
+            return;
+
+        }
 
     }
 

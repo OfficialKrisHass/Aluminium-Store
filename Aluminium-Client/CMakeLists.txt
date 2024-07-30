@@ -13,7 +13,7 @@ endif()
 # sources
 
 set(AL_SOURCES ${AL_COMMON_SOURCES})
-set(AL_SOURCES ${AL_SOURCES} src/main.cpp src/Window.cpp src/UI.cpp src/User.cpp src/Network.cpp)
+set(AL_SOURCES ${AL_SOURCES} src/main.cpp src/Window.cpp src/UI.cpp src/User.cpp src/Network.cpp src/SignInScreen.cpp)
 
 # includes
 

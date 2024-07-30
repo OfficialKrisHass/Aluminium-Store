@@ -28,7 +28,7 @@ namespace Aluminium::Network {
     struct NetworkMessage {
 
         Connection conn = 0;
-        const char* msg = nullptr;
+        char* msg = nullptr;
         uint32 size = 0;
 
         inline operator bool() const { return size != 0; }

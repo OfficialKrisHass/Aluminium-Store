@@ -111,8 +111,10 @@ namespace Aluminium::Network {
         if (interface->ReceiveMessagesOnPollGroup(pollGroup, &incomingMsg, 1) == 0) return;
 
         out->conn = incomingMsg->m_conn;
-        out->msg = (const char*) incomingMsg->m_pData;
+        out->msg = (char*) incomingMsg->m_pData;
         out->size = incomingMsg->m_cbSize;
+
+        out->msg[out->size] = '\0';
 
     }
     uint32 RecieveMessages(NetworkMessage** out) {
@@ -127,8 +129,10 @@ namespace Aluminium::Network {
             NetworkMessage* msg = out[i];
 
             msg->conn = incomingMsg->m_conn;
-            msg->msg = (const char*) incomingMsg->m_pData;
+            msg->msg = (char*) incomingMsg->m_pData;
             msg->size = incomingMsg->m_cbSize;   
+
+            msg->msg[msg->size] = '\0';
 
             incomingMsg++;
 
