@@ -14,6 +14,7 @@ namespace Aluminium {
 
     bool running = true;
     bool signedIn = false;
+    uint32 userID = 0;
 
     void Shutdown();
 
@@ -44,7 +45,7 @@ namespace Aluminium {
             if (!Network::IsConnected())
                 ConnectingUI();
             else if (!signedIn)
-                SignInScreen::UI(&signedIn);
+                SignInScreen::UI(&signedIn, &userID);
             else
                 StoreUI();
 
@@ -69,6 +70,7 @@ namespace Aluminium {
     void StoreUI() {
 
         ImGui::Text("Welcome to the Aluminium Store!");
+        ImGui::Text("Your UserID is: %d", userID);
 
     }
 

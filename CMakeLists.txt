@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.26)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-project(Aluminium-Store LANGUAGES CXX)
+project(Aluminium-Store LANGUAGES CXX C)
 
 set(OUTPUT_DIR linux-x86_64-${CMAKE_BUILD_TYPE})
 
@@ -17,14 +17,16 @@ set(AL_COMMON_LIB_PATH ${AL_COMMON_PATH}/lib)
 set(AL_COMMON_SOURCES ${AL_COMMON_SOURCE_PATH}/Log.cpp ${AL_COMMON_SOURCE_PATH}/Network.cpp)
 
 set(AL_COMMON_DEFINES _CRT_SECURE_NO_WARNINGS AL_LINUX AL_CMAKE)
-set(AL_COMMON_INCLUDES ${AL_COMMON_INCLUDE_PATH} ${AL_COMMON_LIB_PATH}/GameNetworkingSockets/include ${AL_COMMON_LIB_PATH}/fmt)
-set(AL_COMMON_LIBRARIES ${AL_COMMON_LIB_PATH}/GameNetworkingSockets/bin/Linux/libGameNetworkingSockets.so)
+set(AL_COMMON_INCLUDES ${AL_COMMON_INCLUDE_PATH} ${AL_COMMON_LIB_PATH}/GameNetworkingSockets/include ${AL_COMMON_LIB_PATH}/Argon2/include ${AL_COMMON_LIB_PATH}/fmt)
+set(AL_COMMON_LIBRARIES Argon2 ${AL_COMMON_LIB_PATH}/GameNetworkingSockets/bin/Linux/libGameNetworkingSockets.so)
 
 if(${CMAKE_BUILD_TYPE} STREQUAL Debug)
     set(AL_COMMON_DEFINES ${AL_COMMON_DEFINES} AL_DEBUG)
 elseif(${CMAKE_BUILD_TYPE} STREQUAL Release)
     set(AL_COMMON_DEFINES ${AL_COMMON_DEFINES} AL_RELEASE)
 endif()
+
+add_subdirectory(Aluminium-Common/lib/Argon2)
 
 add_subdirectory(Aluminium-Client)
 add_subdirectory(Aluminium-Server)

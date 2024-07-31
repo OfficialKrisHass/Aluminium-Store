@@ -1,4 +1,5 @@
 #include "Database.h"
+#include "User.h"
 
 #include <cppconn/driver.h>
 #include <cppconn/exception.h>
@@ -13,8 +14,9 @@
 
 namespace Aluminium::Database {
 
-    sql::Connection* conn = nullptr;
-    sql::Statement* cmd = nullptr;
+    static sql::Connection* conn = nullptr;
+    static sql::Statement* cmd = nullptr;
+    static std::string cmdText = "";
 
     void Initialize(const char* pass) {
 
@@ -40,57 +42,95 @@ namespace Aluminium::Database {
 
     }
 
-    void AddUser(const char *email, const char *username, const char *password) {
+    User AddUser(const std::string& email, const std::string& username, const std::string& salt, const std::string& password) {
 
-        std::string text = "INSERT INTO Users(email, name, password) VALUES('";
-        text += email; text += "','";
-        text += username; text += "','";
-        text += password; text += "');";
-        cmd->execute(text);
+        BEGIN;
 
-    }
-    bool GetUserFromEmail(const char *email) {
+        cmdText = "INSERT INTO Users(email, name, salt, password) VALUES('";
+        cmdText += email + "','" + username + "','" + salt + "','" + password + "');";
+        cmd->execute(cmdText);
 
-        std::string text = "SELECT email FROM Users WHERE email = '";
-        text += email; text += "';";
-        sql::ResultSet* set = cmd->executeQuery(text);
+        cmdText = "SELECT id, name FROM Users WHERE name = '" + username + "';";
+        sql::ResultSet* set = cmd->executeQuery(cmdText);
 
-        bool ret = false;
-        if (set->next())
-            ret = true;
+        if (!set->next()) {
 
-        delete set;
-        return ret; 
+            LogError("Could not get user after signing up");
+            return User();
 
-    }
-    bool GetUserFromName(const char *username) {
-
-        std::string text = "SELECT name FROM Users WHERE name = '";
-        text += username; text += "';";
-        sql::ResultSet* set = cmd->executeQuery(text);
-
-        bool ret = false;
-        if (set->next())
-            ret = true;
-
-        delete set;
-        return ret; 
-
-    }
-    bool CheckUserPassword(const char *login, const char *password) {
-
-        std::string text = "SELECT email, name, password FROM Users WHERE (email = '";
-        text += login; text += "' OR name = '";
-        text += login; text += "') AND password = '";
-        text += password; text += "';";
-        sql::ResultSet* set = cmd->executeQuery(text);
-
-        bool ret = false;
-        if (set->next())
-            ret = true;
+        }
+        User ret = User(set->getInt("id"), email, username);
 
         delete set;
         return ret;
+
+        END;
+        return User();
+
+    }
+    User GetUser(uint32 id) {
+
+        BEGIN;
+
+        cmdText = "SELECT id, email, name FROM Users WHERE id = " + std::to_string(id) + ';';
+        sql::ResultSet* set = cmd->executeQuery(cmdText);
+        if (!set->next()) return User();
+
+        User ret = User(set->getInt("id"), set->getString("email"), set->getString("name"));
+
+        delete set;
+        return ret;
+
+        END;
+        return User();
+
+    }
+    User GetUser(const std::string& login) {
+
+        BEGIN;
+
+        cmdText = "SELECT id, email, name FROM Users WHERE email = '" + login + "' OR name = '" + login + "';";
+        sql::ResultSet* set = cmd->executeQuery(cmdText);
+        if (!set->next()) return User();
+
+        User ret = User(set->getInt("id"), set->getString("email"), set->getString("name"));
+
+        delete set;
+        return ret;
+
+        END;
+        return User();
+
+    }
+
+    void GetUserSalt(const std::string &login, std::string &out) {
+
+        BEGIN;
+
+        cmdText = "SELECT email, name, salt FROM Users WHERE email = '" + login + "' OR name = '" + login + "';";
+        sql::ResultSet* set = cmd->executeQuery(cmdText);
+        if (!set->next()) return;
+
+        out = set->getString("salt");
+
+        END;
+
+    }
+
+    bool CheckUserPassword(uint32 id, const std::string& password) {
+
+        BEGIN;
+
+        cmdText = "SELECT id, password FROM Users WHERE id = " + std::to_string(id) + " AND password = '" + password + "';";
+        sql::ResultSet* set = cmd->executeQuery(cmdText);
+
+        bool ret = set->next();
+
+        delete set;
+        return ret;
+
+        END;
+        return false;
 
     } 
 

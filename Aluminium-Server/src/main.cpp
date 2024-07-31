@@ -8,9 +8,13 @@
 namespace Aluminium {
 
     bool running = true;
-    std::unordered_map<uint32, User> connectedUsers;
+    std::unordered_map<Network::Connection, User> connectedUsers;
 
-    void HandleMessage(const Network::NetworkMessage& message);
+    void HandleMessage(const Network::Message& message);
+
+    void SignUpUser(const Network::Message& message);
+    void SignInUser(const Network::Message& message);
+    void RetrieveUserSalt(const Network::Message& message);
 
     void ConnectionStatusChangedCallback(const Network::StatusChangeData& data);
 
@@ -27,7 +31,7 @@ namespace Aluminium {
 
             Network::Update();
 
-            Network::NetworkMessage message;
+            Network::Message message;
             Network::RecieveMessage(&message);
             if (message)
                 HandleMessage(message);
@@ -46,60 +50,100 @@ namespace Aluminium {
 
     }
 
-    void HandleMessage(const Network::NetworkMessage& message) {
+    void HandleMessage(const Network::Message& message) {
 
-        uint64 begin = strlen("/SignIn/");
-        const std::string msg = message.msg;
+        switch (message.type) {
+            
+            case MESSAGE_SIGNUP: SignUpUser(message); break; 
+            case MESSAGE_SIGNIN: SignInUser(message); break;
+            case MESSAGE_USER_SALT: RetrieveUserSalt(message); break;
+            default: LogError("Invalid message type {}", (uint8) message.type);
 
-        if (msg.find("/SignUp/") != std::string::npos) {
+        }
 
-            std::string email = msg.substr(begin, msg.find_first_of(' ', begin) - begin);
-            begin += email.size() + 1;
+    }
 
-            std::string username = msg.substr(begin, msg.find_first_of(' ', begin) - begin);
-            begin += username.size() + 1;
+    void SignUpUser(const Network::Message& message) {
 
-            std::string password = msg.substr(begin);
+        std::string vals[4];
+        uint32 index = 0;
+        for (uint32 i = 0; i < message.size; i++) {
 
-            Log("Singing up user {}", email);
+            if (message.msg[i] == ' ') {
 
-            Database::AddUser(email.c_str(), username.c_str(), password.c_str());
-            Network::SendMessage(message.conn, "/SignIn/Success");
+                index++;
+                continue;
+
+            }
+            vals[index].push_back(message.msg[i]);
+
+        }
+
+        Log("Signing up user {} {}", vals[0], vals[1]);
+
+        connectedUsers[message.conn] = Database::AddUser(vals[0], vals[1], vals[2], vals[3]);
+        Network::SendMessage(message.conn, MESSAGE(MESSAGE_SIGNIN_SUCCESS) + std::to_string(connectedUsers.at(message.conn).GetID()));
+
+        Log("Successfuly signed up user");
+
+    }
+    void SignInUser(const Network::Message& message) {
+
+        std::string vals[2];
+        uint32 index = 0;
+        for (uint32 i = 0; i < message.size; i++) {
+
+            if (message.msg[i] == ' ') {
+
+                index++;
+                continue;
+
+            }
+            vals[index].push_back(message.msg[i]);
+
+        }
+
+        Log("Signing in user {}", vals[0]);
+
+        connectedUsers[message.conn] = Database::GetUser(vals[0]);
+        User& user = connectedUsers.at(message.conn);
+
+        if (!user || !Database::CheckUserPassword(user.GetID(), vals[1])) {
+
+            Log("Failed to sign in user, invalid credentials");
+
+            Network::SendMessage(message.conn, std::to_string(MESSAGE_SIGNIN_FAIL) + ":Invalid credentials");
+            connectedUsers.erase(message.conn);
 
             return;
 
         }
-        if (msg.find("/SignIn/") != std::string::npos) {
 
-            std::string login = msg.substr(begin, msg.find_first_of(' ', begin) - begin);
-            begin += login.size() + 1;
+        Network::SendMessage(message.conn, MESSAGE(MESSAGE_SIGNIN_SUCCESS) + std::to_string(user.GetID()));
 
-            std::string password = msg.substr(begin);
+        Log("Successfuly signed in user");
 
-            Log("Signing in user {}", login);
-            if (!Database::GetUserFromEmail(login.c_str()) && !Database::GetUserFromName(login.c_str())) {
+    }
+    void RetrieveUserSalt(const Network::Message& message) {
 
-                LogError("Failed to Sign In, invalid login");
-                Network::SendMessage(message.conn, "/SignIn/Invalid login");
+        std::string login = message.msg;
+        std::string salt;
 
-                return;
+        Log("Retrieving user salt for login {}", login);
+        Database::GetUserSalt(login, salt);
 
-            }
-            if (!Database::CheckUserPassword(login.c_str(), password.c_str())) {
+        if (salt.empty()) {
 
-                LogError("Failed to Sign In, invalid password");
-                Network::SendMessage(message.conn, "/SignIn/Invalid password");
-
-                return;
-
-            }
-
-            Log("Successfully logged in user {}", login);
-            Network::SendMessage(message.conn, "/SignIn/Success");
+            LogError("Could not get user salt");
+            Network::SendMessage(message.conn, MESSAGE(MESSAGE_SIGNIN_FAIL) + "Could not get user salt");
 
             return;
 
         }
+
+        Network::SendMessage(message.conn, MESSAGE(MESSAGE_USER_SALT) + salt);
+
+        Log("Successfuly retrieved and sent user salt");
 
     }
 
@@ -144,7 +188,7 @@ namespace Aluminium {
 
                 }
 
-                connectedUsers[data.conn] = User(data.conn, "User" + std::to_string(connectedUsers.size()));
+                connectedUsers[data.conn] = User();
 
             }
             case ConnectionState::Connected: break;

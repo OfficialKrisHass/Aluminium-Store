@@ -24,7 +24,10 @@ launch:
 	@./build/$(BUILD_DIR)/Aluminium-Client/Aluminium-Client
 
 start-server:
-	@./build/$(BUILD_DIR)/Aluminium-Server/Aluminium-Server $(PASSWORD) &
+	@./build/$(BUILD_DIR)/Aluminium-Server/Aluminium-Server $(PASSWORD)
+
+database:
+	@mariadb -u dev -p aluminium_store
 
 clean:
 	@rm -rf build/

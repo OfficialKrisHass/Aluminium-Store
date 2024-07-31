@@ -14,9 +14,9 @@ namespace Aluminium::Network {
 
     void CloseConnection(Connection conn);
 
-    void SendMessage(const char* msg);
-    void RecieveMessage(NetworkMessage *out);
-    uint32 RecieveMessages(NetworkMessage **out);
+    void SendMessage(const std::string& msg);
+    void RecieveMessage(Message *out);
+    uint32 RecieveMessages(Message **out);
     
     void SetConnectionStatusChangedCallback(ConnectionStatusChangeCallback callback);
 

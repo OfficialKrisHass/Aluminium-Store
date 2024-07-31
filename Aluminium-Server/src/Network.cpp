@@ -97,15 +97,15 @@ namespace Aluminium::Network {
 
     }
 
-    void SendMessage(Connection conn, const char* msg) {
+    void SendMessage(Connection conn, const std::string& msg) {
 
         AL_ASSERT(conn != k_HSteamNetConnection_Invalid, "Can not send message to an invalid connection. Message: {}", msg);
 
-        EResult res = interface->SendMessageToConnection(conn, msg, (uint32) strlen(msg), k_nSteamNetworkingSend_Reliable, nullptr); 
+        EResult res = interface->SendMessageToConnection(conn, msg.c_str(), (uint32) msg.length(), k_nSteamNetworkingSend_Reliable, nullptr); 
         AL_ASSERT(res == k_EResultOK, "Could not send message to server. Message: {}", msg);
 
     }
-    void RecieveMessage(NetworkMessage* out) {
+    void RecieveMessage(Message* out) {
 
         ISteamNetworkingMessage* incomingMsg = nullptr;
         if (interface->ReceiveMessagesOnPollGroup(pollGroup, &incomingMsg, 1) == 0) return;
@@ -115,24 +115,26 @@ namespace Aluminium::Network {
         out->size = incomingMsg->m_cbSize;
 
         out->msg[out->size] = '\0';
+        out->SetType();
 
     }
-    uint32 RecieveMessages(NetworkMessage** out) {
+    uint32 RecieveMessages(Message** out) {
 
         ISteamNetworkingMessage* incomingMsg = nullptr;
         uint32 num = interface->ReceiveMessagesOnPollGroup(pollGroup, &incomingMsg, 100);
         if (num == 0) return 0;
 
-        *out = new NetworkMessage[num];
+        *out = new Message[num];
         for (uint32 i = 0; i < num; i++) {
 
-            NetworkMessage* msg = out[i];
+            Message* msg = out[i];
 
             msg->conn = incomingMsg->m_conn;
             msg->msg = (char*) incomingMsg->m_pData;
             msg->size = incomingMsg->m_cbSize;   
 
             msg->msg[msg->size] = '\0';
+            msg->SetType();
 
             incomingMsg++;
 

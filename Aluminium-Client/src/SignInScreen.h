@@ -4,6 +4,6 @@
 
 namespace Aluminium::SignInScreen {
 
-    void UI(bool* signedIn);
+    void UI(bool* signedIn, uint32* userId);
 
 }

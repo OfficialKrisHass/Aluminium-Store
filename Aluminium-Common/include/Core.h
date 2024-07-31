@@ -9,6 +9,8 @@
 
 #define INVALID_CONN_ID 0 
 
+#define STRINGIFY(x) #x
+
 namespace Aluminium {
 
     typedef char int8;

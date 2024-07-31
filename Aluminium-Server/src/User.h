@@ -8,15 +8,20 @@ namespace Aluminium {
 
     public:
         User() = default;
-        User(uint32 connID, const std::string& name) : connID(connID), name(name) {}
+        User(uint32 id, const std::string& email, const std::string& name)
+            : id(id), email(email), name(name) {}
 
-        inline uint32 GetConnID() const { return connID; }
+        inline uint32 GetID() const { return id; }
+
+        inline const std::string& GetEmail() const { return email; }
         inline const std::string& GetName() const { return name; }
 
-        inline operator bool() const { return connID != INVALID_CONN_ID; }
+        inline operator bool() const { return id != 0; }
 
     private:
-        uint32 connID = INVALID_CONN_ID;
+        uint32 id = 0;
+
+        std::string email = "";
         std::string name = "";
 
     };
