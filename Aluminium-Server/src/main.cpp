@@ -1,9 +1,17 @@
+#include "main.h"
 #include "Network.h"
 #include "Database.h"
 #include "User.h"
+#include "Input.h"
 
 #include <thread>
 #include <unordered_map>
+
+#ifdef AL_WINDOWS
+    #include <Windows.h>
+#elif AL_LINUX
+    #include <signal.h>
+#endif
 
 namespace Aluminium {
 
@@ -11,6 +19,7 @@ namespace Aluminium {
     std::unordered_map<Network::Connection, User> connectedUsers;
 
     void HandleMessage(const Network::Message& message);
+    void HandleInput(const std::string& input);
 
     void SignUpUser(const Network::Message& message);
     void SignInUser(const Network::Message& message);
@@ -27,14 +36,18 @@ namespace Aluminium {
 
         Database::Initialize(argv[1]);
 
+        Input::SetInputHandler(HandleInput);
+        std::thread inputThread(Input::InputThread);
+
         while (running) {
 
             Network::Update();
+            Input::Update();
 
-            Network::Message message;
-            Network::RecieveMessage(&message);
-            if (message)
-                HandleMessage(message);
+            Network::Message* messages = nullptr;
+            uint32 num = Network::RecieveMessages(&messages);
+            for (uint32 i = 0; i < num; i++)
+                HandleMessage(messages[i]);
 
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
@@ -60,6 +73,14 @@ namespace Aluminium {
             default: LogError("Invalid message type {}", (uint8) message.type);
 
         }
+
+    }
+    void HandleInput(const std::string& input) {
+
+        if (input == "/quit")
+            running = false;
+        else
+            LogError("Invalid input command {}", input);
 
     }
 
@@ -193,11 +214,26 @@ namespace Aluminium {
 
     }
 
+    bool IsRunning() { return running; }
+
+    void Quit() { running = false; }
+
+    void Nuke(int retCode) {
+
+    #ifdef AL_WINDOWS
+        ExitProcess(retCode);
+    #elif AL_LINUX
+        (void) retCode;
+        kill(getpid(), SIGKILL);
+    #endif
+
+    }
+
 }
 
 int main(int argc, char** argv) {
 
     AL_ASSERT(argc > 1, "Missing database password in arguments");
-    return Aluminium::StartServer(argc, argv);
+    Aluminium::Nuke(Aluminium::StartServer(argc, argv));
 
 }

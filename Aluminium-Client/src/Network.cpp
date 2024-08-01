@@ -83,7 +83,6 @@ namespace Aluminium::Network {
 
         Message* messages = nullptr;
         uint32 num = RecieveMessages(&messages);
-        if (num == 0) return;
 
         for (uint32 i = 0; i < num; i++) {
 

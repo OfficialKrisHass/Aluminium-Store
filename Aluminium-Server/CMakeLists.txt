@@ -9,7 +9,7 @@ set(AL_DEFINES ${AL_DEFINES} AL_SERVER AL_LOGGING)
 # defines
 
 set(AL_SOURCES ${AL_COMMON_SOURCES})
-set(AL_SOURCES ${AL_SOURCES} src/main.cpp src/Network.cpp src/Database.cpp)
+set(AL_SOURCES ${AL_SOURCES} src/main.cpp src/Network.cpp src/Database.cpp src/Input.cpp)
 
 # includes
 
