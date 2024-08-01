@@ -9,6 +9,8 @@ namespace Aluminium::Network {
     void Update();
     void Shutdown();
 
+    void NetworkThread();
+
     bool ConnectToServer();
     bool IsConnected();
 
@@ -19,5 +21,8 @@ namespace Aluminium::Network {
     uint32 RecieveMessages(Message **out);
     
     void SetConnectionStatusChangedCallback(ConnectionStatusChangeCallback callback);
+
+    typedef void (*MessageHandler)(const Message& message);
+    void SetMessageHandler(MessageHandler handler);
 
 }

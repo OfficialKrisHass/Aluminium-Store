@@ -9,10 +9,10 @@ namespace Aluminium::Database {
     void Initialize(const char* pass);
     void Shutdown();
 
-    User AddUser(const std::string& email, const std::string& username, const std::string& salt, const std::string& password);
+    void AddUser(User& out, const std::string& email, const std::string& username, const std::string& salt, const std::string& password);
 
-    User GetUser(uint32 id);
-    User GetUser(const std::string& login);
+    void GetUser(User& out, uint32 id);
+    void GetUser(User& out, const std::string& login);
 
     void GetUserSalt(const std::string& login, std::string& out);
 

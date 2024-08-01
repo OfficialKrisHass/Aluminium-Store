@@ -42,7 +42,7 @@ namespace Aluminium::Database {
 
     }
 
-    User AddUser(const std::string& email, const std::string& username, const std::string& salt, const std::string& password) {
+    void AddUser(User& out, const std::string& email, const std::string& username, const std::string& salt, const std::string& password) {
 
         BEGIN;
 
@@ -52,54 +52,48 @@ namespace Aluminium::Database {
 
         cmdText = "SELECT id, name FROM Users WHERE name = '" + username + "';";
         sql::ResultSet* set = cmd->executeQuery(cmdText);
-
         if (!set->next()) {
 
             LogError("Could not get user after signing up");
-            return User();
+            return;
 
         }
-        User ret = User(set->getInt("id"), email, username);
+
+        out = User(set->getInt("id"), email, username);
 
         delete set;
-        return ret;
 
         END;
-        return User();
 
     }
-    User GetUser(uint32 id) {
+    void GetUser(User& out, uint32 id) {
 
         BEGIN;
 
         cmdText = "SELECT id, email, name FROM Users WHERE id = " + std::to_string(id) + ';';
         sql::ResultSet* set = cmd->executeQuery(cmdText);
-        if (!set->next()) return User();
+        if (!set->next()) return;
 
-        User ret = User(set->getInt("id"), set->getString("email"), set->getString("name"));
+        out = User(set->getInt("id"), set->getString("email"), set->getString("name"));
 
         delete set;
-        return ret;
 
         END;
-        return User();
 
     }
-    User GetUser(const std::string& login) {
+    void GetUser(User& out, const std::string& login) {
 
         BEGIN;
 
         cmdText = "SELECT id, email, name FROM Users WHERE email = '" + login + "' OR name = '" + login + "';";
         sql::ResultSet* set = cmd->executeQuery(cmdText);
-        if (!set->next()) return User();
+        if (!set->next()) return;
 
-        User ret = User(set->getInt("id"), set->getString("email"), set->getString("name"));
+        out = User(set->getInt("id"), set->getString("email"), set->getString("name"));
 
         delete set;
-        return ret;
 
         END;
-        return User();
 
     }
 

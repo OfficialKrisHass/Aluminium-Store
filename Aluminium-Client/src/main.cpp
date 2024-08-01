@@ -21,6 +21,8 @@ namespace Aluminium {
     void ConnectingUI();
     void StoreUI();
 
+    void HandleMessage(const Network::Message& message);
+
     void OnConnectionStatusChanged(const Network::StatusChangeData& data);
     void OnWindowClose();
 
@@ -35,17 +37,21 @@ namespace Aluminium {
         
         Network::Initialize();
         Network::SetConnectionStatusChangedCallback(OnConnectionStatusChanged);
-        std::thread networkThread(Network::Update);
+        Network::SetMessageHandler(HandleMessage);
+
+        std::thread networkThread(Network::NetworkThread);
 
         while (running) {
 
             Window::Update();
             UI::BeginFrame();
 
+            Network::Update();
+
             if (!Network::IsConnected())
                 ConnectingUI();
             else if (!signedIn)
-                SignInScreen::UI(&signedIn, &userID);
+                SignInScreen::UI();
             else
                 StoreUI();
 
@@ -60,7 +66,16 @@ namespace Aluminium {
         return 0;
 
     }
+    void Shutdown() {
 
+        Log("Shutting down");
+
+        Network::Shutdown();
+
+        UI::Shutdown();
+        Window::Shutdown();
+
+    }
 
     void ConnectingUI() {
 
@@ -74,14 +89,23 @@ namespace Aluminium {
 
     }
 
-    void Shutdown() {
+    void HandleMessage(const Network::Message& message) {
 
-        Log("Shutting down");
+        switch (message.type) {
 
-        Network::Shutdown();
+            case MESSAGE_SIGNIN_SUCCESS: {
 
-        UI::Shutdown();
-        Window::Shutdown();
+                userID = SignInScreen::SignInSuccess(message);
+                signedIn = true;
+
+                break;
+
+            }
+            case MESSAGE_SIGNIN_FAIL: SignInScreen::SignInFail(message); break;
+            case MESSAGE_USER_SALT: SignInScreen::GotUserSalt(message); break;
+            default: LogError("Invalid message type {} for message {}", message.type, message.msg); break;
+
+        }
 
     }
 

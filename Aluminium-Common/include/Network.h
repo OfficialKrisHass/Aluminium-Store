@@ -41,26 +41,25 @@ namespace Aluminium::Network {
         uint8 type = MESSAGE_NONE;
         Connection conn = 0;
 
-        char* msg = nullptr;
-        uint32 size = 0;
+        std::string msg = ""; 
 
-        void SetType() {
+        void SetMessage(char* data, uint32 len) {
+
+            msg.reserve(len);
 
             uint32 i = 0;
-            for (; i < size; i++) {
+            for (; i < len; i++) {
 
-                if (msg[i] == ':') break;
-                type = type * 10 + (msg[i] - '0');
+                if (data[i] == ':') break;
+                type = type * 10 + (data[i] - '0');
 
             }
-
-            i++;
-            msg += i;
-            size -= i;
+            for (++i; i < len; i++)
+                msg.push_back(data[i]);
 
         }
 
-        inline operator bool() const { return size != 0; }
+        inline operator bool() const { return !msg.empty(); }
 
     };
 

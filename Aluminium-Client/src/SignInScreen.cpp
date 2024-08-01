@@ -38,7 +38,7 @@ namespace Aluminium::SignInScreen {
 
     void ClearInput();
 
-    void UI(bool* signedIn, uint32* userID) {
+    void UI() {
 
         ImGui::PushItemFlag(ImGuiItemFlags_Disabled, signInRequested);
 
@@ -59,49 +59,43 @@ namespace Aluminium::SignInScreen {
 
         }
 
-        if (!signInRequested) return;
-        ImGui::PopItemFlag();
+        if (signInRequested)
+            ImGui::PopItemFlag();
 
-        Network::Message response;
-        Network::RecieveMessage(&response);
-        if (!response) return;
+    }
 
-        if (response.type == MESSAGE_USER_SALT) {
+    uint32 SignInSuccess(const Network::Message &message) {
 
-            Log("Salt recieved, sending Sign in request");
+        Log("Successfully signed In with userID {}", message.msg);
+        return std::stoi(message.msg);
 
-            std::string hashedPassword = password;
-            std::string salt = response.msg; 
-            HashPassword(hashedPassword, salt);
-
-            Network::SendMessage(MESSAGE(MESSAGE_SIGNIN) + login + ' ' + hashedPassword);
-            return;
-
-        }
+    }
+    void SignInFail(const Network::Message &message) {
 
         ClearInput();
-        if (response.type == MESSAGE_SIGNIN_FAIL) {
 
-            errMsg = "Failed to ";
-            errMsg += (signUp ? "Sign Up: " : "Sign In: ");
-            errMsg += response.msg;
+        errMsg = "Failed to ";
+        errMsg += (signUp ? "Sign Up: " : "Sign In: ");
+        errMsg += message.msg;
 
-            LogError(errMsg.c_str());
-            return;
+        LogError(errMsg.c_str());
 
-        }
+    }
+    void GotUserSalt(const Network::Message &message) {
 
-        *signedIn = true;
-        *userID = atoi(response.msg);
-        Log("Successfully signed In with userID {}", *userID);
+        Log("Salt recieved, sending Sign in request");
 
+        std::string hashedPassword;
+        HashPassword(hashedPassword, message.msg);
+
+        Network::SendMessage(MESSAGE(MESSAGE_SIGNIN) + login + ' ' + hashedPassword);
 
     }
 
     void SignIn() {
 
         ImGui::InputText("Username or email: ", &login);
-        ImGui::InputText("Password: ", &password);
+        ImGui::InputText("Password: ", &password, ImGuiInputTextFlags_Password);
 
         if (!ImGui::Button("Sign In")) return;
 
@@ -115,8 +109,8 @@ namespace Aluminium::SignInScreen {
 
         ImGui::InputText("Email: ", &login);
         ImGui::InputText("Username: ", &username);
-        ImGui::InputText("Password: ", &password);
-        ImGui::InputText("Repeat Password: ", &repeatPassword);
+        ImGui::InputText("Password: ", &password, ImGuiInputTextFlags_Password);
+        ImGui::InputText("Repeat Password: ", &repeatPassword, ImGuiInputTextFlags_Password);
 
         if (!ImGui::Button("Sign Up")) return;
         Log("Attempting Sign up");
@@ -132,7 +126,7 @@ namespace Aluminium::SignInScreen {
         VERIFY(password.find(' ') == std::string::npos, "Password can't contain a space");
         VERIFY(password.length() > 5 && password.length() < 21, "Password must be at least 6 characters, and at most 20");
 
-        std::string hashedPassword = password;
+        std::string hashedPassword;
         std::string salt = username + std::to_string(time(0));
         if (salt.length() > SALT_LEN)
             salt.resize(SALT_LEN);
@@ -144,7 +138,7 @@ namespace Aluminium::SignInScreen {
 
     }
     
-    void HashPassword(std::string& password, const std::string& salt) {
+    void HashPassword(std::string& outPass, const std::string& salt) {
 
         // Hash
 
@@ -152,7 +146,7 @@ namespace Aluminium::SignInScreen {
         Argon2_Context context = Argon2_Context(out, HASH_LEN, (uint8*) password.data(), password.length(), (uint8*) salt.data(), salt.length(), 
                 nullptr, 0, nullptr, 0, 
                 ITERATIONS, MEMORY, 1, THREADS, 
-                nullptr, nullptr, true, false, false, false);
+                nullptr, nullptr, false, false, false, false);
 
         int32 ret = Argon2id(&context);
         AL_ASSERT(ret == ARGON2_OK, "Could not hash the password");
@@ -161,11 +155,11 @@ namespace Aluminium::SignInScreen {
 
         static const char hexTable[] = "0123456789ABCDEF";
 
-        password.resize(HASH_LEN * 2, '0');
+        outPass.resize(HASH_LEN * 2, '0');
         for (uint32 i = 0; i < HASH_LEN; i++) {
 
-            password[i * 2] = hexTable[out[i] >> 4];
-            password[i * 2 + 1] = hexTable[out[i] & 0xF];
+            outPass[i * 2] = hexTable[out[i] >> 4];
+            outPass[i * 2 + 1] = hexTable[out[i] & 0xF];
 
         }
 

@@ -67,22 +67,21 @@ namespace Aluminium {
 
         std::string vals[4];
         uint32 index = 0;
-        for (uint32 i = 0; i < message.size; i++) {
+        for (uint32 i = 0; i < message.msg.length(); i++) {
 
-            if (message.msg[i] == ' ') {
-
-                index++;
-                continue;
-
-            }
-            vals[index].push_back(message.msg[i]);
+            if (message.msg[i] != ' ')
+                vals[index].push_back(message.msg[i]);
+            else
+                index++; 
 
         }
 
         Log("Signing up user {} {}", vals[0], vals[1]);
 
-        connectedUsers[message.conn] = Database::AddUser(vals[0], vals[1], vals[2], vals[3]);
-        Network::SendMessage(message.conn, MESSAGE(MESSAGE_SIGNIN_SUCCESS) + std::to_string(connectedUsers.at(message.conn).GetID()));
+        User& user = connectedUsers.at(message.conn);
+
+        Database::AddUser(user, vals[0], vals[1], vals[2], vals[3]);
+        Network::SendMessage(message.conn, MESSAGE(MESSAGE_SIGNIN_SUCCESS) + std::to_string(user.GetID()));
 
         Log("Successfuly signed up user");
 
@@ -91,29 +90,26 @@ namespace Aluminium {
 
         std::string vals[2];
         uint32 index = 0;
-        for (uint32 i = 0; i < message.size; i++) {
+        for (uint32 i = 0; i < message.msg.length(); i++) {
 
-            if (message.msg[i] == ' ') {
-
+            if (message.msg[i] != ' ')
+                vals[index].push_back(message.msg[i]);
+            else
                 index++;
-                continue;
-
-            }
-            vals[index].push_back(message.msg[i]);
 
         }
 
         Log("Signing in user {}", vals[0]);
 
-        connectedUsers[message.conn] = Database::GetUser(vals[0]);
         User& user = connectedUsers.at(message.conn);
+        Database::GetUser(user, vals[0]);
 
         if (!user || !Database::CheckUserPassword(user.GetID(), vals[1])) {
 
             Log("Failed to sign in user, invalid credentials");
 
-            Network::SendMessage(message.conn, std::to_string(MESSAGE_SIGNIN_FAIL) + ":Invalid credentials");
-            connectedUsers.erase(message.conn);
+            Network::SendMessage(message.conn, MESSAGE(MESSAGE_SIGNIN_FAIL) + "Invalid credentials");
+            connectedUsers.at(message.conn) = User();
 
             return;
 
@@ -126,11 +122,10 @@ namespace Aluminium {
     }
     void RetrieveUserSalt(const Network::Message& message) {
 
-        std::string login = message.msg;
-        std::string salt;
+        Log("Retrieving user salt for login {}", message.msg);
 
-        Log("Retrieving user salt for login {}", login);
-        Database::GetUserSalt(login, salt);
+        std::string salt;
+        Database::GetUserSalt(message.msg, salt);
 
         if (salt.empty()) {
 

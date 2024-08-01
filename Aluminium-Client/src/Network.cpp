@@ -4,6 +4,8 @@
 #include <steam/steamnetworkingsockets.h>
 #include <steam/isteamnetworkingutils.h>
 
+#include <mutex>
+#include <queue>
 #include <thread>
 
 namespace Aluminium::Network {
@@ -14,6 +16,13 @@ namespace Aluminium::Network {
     ISteamNetworkingSockets* interface;
 
     ConnectionStatusChangeCallback connectionStatusChangeCallback = nullptr;
+
+    std::mutex messageMutex;
+    std::queue<Message> messageQueue;
+    MessageHandler messageHandler;
+
+    void PollIncomingMessages();
+    void HandleMessages();
 
     static void OnConnectionStatusChanged(SteamNetConnectionStatusChangedCallback_t* info);
     static void DebugOutput(ESteamNetworkingSocketsDebugOutputType type, const char* msg);
@@ -38,6 +47,18 @@ namespace Aluminium::Network {
 
     }
     void Update() {
+        
+        HandleMessages();
+
+    }
+    void Shutdown() {
+
+        Log("Shutting down GameNetworkingSockets");
+        GameNetworkingSockets_Kill();
+
+    }
+
+    void NetworkThread() {
 
         if (!Network::ConnectToServer()) {
 
@@ -49,16 +70,40 @@ namespace Aluminium::Network {
         while (IsRunning()) {
 
             interface->RunCallbacks();
+            PollIncomingMessages();
+
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
         }
 
 
     }
-    void Shutdown() {
 
-        Log("Shutting down GameNetworkingSockets");
-        GameNetworkingSockets_Kill();
+    void PollIncomingMessages() {
+
+        Message* messages = nullptr;
+        uint32 num = RecieveMessages(&messages);
+        if (num == 0) return;
+
+        for (uint32 i = 0; i < num; i++) {
+
+            messageMutex.lock();
+            messageQueue.push(messages[i]);
+            messageMutex.unlock();
+
+        }
+
+    }
+    void HandleMessages() {
+
+        messageMutex.lock();
+        while (!messageQueue.empty()) {
+
+            messageHandler(messageQueue.front());
+            messageQueue.pop();
+
+        }
+        messageMutex.unlock();
 
     }
 
@@ -119,11 +164,7 @@ namespace Aluminium::Network {
         AL_ASSERT(incomingMsg->m_conn == connection, "Recieved message from a different connection {}, expected {}", incomingMsg->m_conn, connection);
 
         out->conn = incomingMsg->m_conn;
-        out->msg = (char*) incomingMsg->m_pData;
-        out->size = incomingMsg->m_cbSize;
-
-        out->msg[out->size] = '\0';
-        out->SetType();
+        out->SetMessage((char*) incomingMsg->m_pData, incomingMsg->m_cbSize);
 
     }
     uint32 RecieveMessages(Message **out) {
@@ -139,11 +180,7 @@ namespace Aluminium::Network {
             AL_ASSERT(incomingMsg->m_conn == connection, "Recieved message from a different connection {}, expected {}", incomingMsg->m_conn, connection);
 
             msg->conn = incomingMsg->m_conn;
-            msg->msg = (char*) incomingMsg->m_pData;
-            msg->size = incomingMsg->m_cbSize;   
-
-            msg->msg[msg->size] = '\0';
-            msg->SetType();
+            msg->SetMessage((char*) incomingMsg->m_pData, incomingMsg->m_cbSize); 
 
             incomingMsg++;
 
@@ -156,6 +193,12 @@ namespace Aluminium::Network {
     void SetConnectionStatusChangedCallback(ConnectionStatusChangeCallback callback) {
 
         connectionStatusChangeCallback = callback;
+
+    }
+
+    void SetMessageHandler(MessageHandler handler) {
+
+        messageHandler = handler;
 
     }
 
